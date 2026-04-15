@@ -1,0 +1,34 @@
+[project]
+name = "python-library"
+version = "2.2.7"
+description = "python library"
+requires-python = ">=3.11"
+dependencies = [
+    "argon2-cffi>=25.1.0",
+    "boto3>=1.42.0",
+    "pyarrow>=22.0.0",
+    "rich>=14.2.0",
+]
+
+[project.optional-dependencies]
+postgres = [
+    "psycopg[binary]>=3.2.1",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.0",
+    "pyright>=1.1.407",
+    "pytest>=9.0.1",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.14.6",
+]
+
+[tool.pyright]
+typeCheckingMode = "basic"
+reportOptionalSubscript = "none"
+reportOptionalMemberAccess = "none"
+reportOptionalContextManager = "none"
