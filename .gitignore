@@ -1,6 +1,6 @@
+build/
 .idea/
-__pycache__/
-.pytest_cache/
-.ruff_cache/
+*.egg-info/
 .venv/
 logs/
+__pycache__/
