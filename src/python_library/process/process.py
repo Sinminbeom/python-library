@@ -10,6 +10,10 @@ from python_library.utils.class_name_generator import ClassNameGenerator
 
 class IProcess(ABC):
 
+    @property
+    @abstractmethod
+    def name(self) -> str: ...
+
     @abstractmethod
     def action(self) -> None: ...
 
@@ -18,6 +22,12 @@ class IProcess(ABC):
 
     @abstractmethod
     def stop(self) -> None: ...
+
+    @abstractmethod
+    def join(self) -> None: ...
+
+    @abstractmethod
+    def close(self) -> None: ...
 
     @abstractmethod
     def is_stop(self) -> bool: ...
@@ -139,6 +149,19 @@ class QueueProcess(abProcess, IQueueProcess):
 
 
 class abProcessing(abProcess):
+    def run(self) -> None:
+        try:
+            while not self.is_stop():
+                self.action()
+        except Exception as e:
+            raise e
+
+    @abstractmethod
+    def action(self) -> None:
+        pass
+
+
+class QueueProcessing(QueueProcess):
     def run(self) -> None:
         try:
             while not self.is_stop():

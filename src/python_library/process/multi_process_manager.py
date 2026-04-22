@@ -4,7 +4,7 @@ from queue import Queue
 from typing import List, Optional, MutableMapping
 
 from python_library.job.job import IJob
-from python_library.process.process import abProcess
+from python_library.process.process import IQueueProcess
 from python_library.thread.thread import abThread
 
 
@@ -13,7 +13,7 @@ class MultiProcessManager(abThread):
         super().__init__()
         self._manager = Manager()
 
-        self._process_list: List[abProcess] = list()
+        self._process_list: List[IQueueProcess] = list()
 
         self._shared_job_queue: Queue = self._manager.Queue()
         self._shared_job_queue_lock: Lock = self._manager.Lock()
@@ -25,7 +25,7 @@ class MultiProcessManager(abThread):
 
         pass
 
-    def append(self, process: abProcess) -> None:
+    def append(self, process: IQueueProcess) -> None:
         process.set_shared_job_queue(
             self._shared_job_queue, self._shared_job_queue_lock
         )
