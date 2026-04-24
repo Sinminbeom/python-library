@@ -4,16 +4,9 @@ import io
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-ACCESS_KEY_ID = "access-key-id"
-SECRET_ACCESS_KEY = "your-secret-access-key"
-
 
 def test_copy():
-    client = boto3.client(
-        service_name="s3",
-        aws_access_key_id=ACCESS_KEY_ID,
-        aws_secret_access_key=SECRET_ACCESS_KEY,
-    )
+    client = boto3.client(service_name="s3")
 
     src_bucket_name = "python_library-dl-raw-dev"
     src_path = "test/test.txt"
@@ -28,11 +21,7 @@ def test_copy():
 def test_list_objects():
     bucket_name = "python_library-dl-raw-dev"
 
-    client = boto3.client(
-        service_name="s3",
-        aws_access_key_id=ACCESS_KEY_ID,
-        aws_secret_access_key=SECRET_ACCESS_KEY,
-    )
+    client = boto3.client(service_name="s3")
 
     response = client.list_objects(Bucket=bucket_name)
     print(response)
@@ -41,11 +30,7 @@ def test_list_objects():
 
 
 def test_write():
-    client = boto3.client(
-        service_name="s3",
-        aws_access_key_id=ACCESS_KEY_ID,
-        aws_secret_access_key=SECRET_ACCESS_KEY,
-    )
+    client = boto3.client(service_name="s3")
 
     src_bucket = "python_library-dl-raw-dev"
     src_key = "test/meta.json"
@@ -71,11 +56,7 @@ def test_write():
 
 
 def test_read():
-    client = boto3.client(
-        service_name="s3",
-        aws_access_key_id=ACCESS_KEY_ID,
-        aws_secret_access_key=SECRET_ACCESS_KEY,
-    )
+    client = boto3.client(service_name="s3")
     bucket = "python_library-dl-raw-dev"
     key = "test/parquet/output.parquet"
 
