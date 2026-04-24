@@ -3,8 +3,8 @@ from typing import List, Dict, Optional
 from abc import abstractmethod
 
 from python_library.job_queue.job_queue import IJobQueue, JobQueue
-from python_library.thread.thread import abThread, IQueueThread
-from python_library.thread.worker_thread import QueueThread
+from python_library.thread.thread import abThread
+from python_library.thread.queue_thread import IQueueThread, QueueThread
 
 
 class MultiThreadManager(QueueThread):

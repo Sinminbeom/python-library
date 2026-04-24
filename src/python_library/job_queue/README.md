@@ -35,7 +35,7 @@ class IJobQueue(ABC):
 ## 스레드 안전성
 
 `JobQueue` 자체는 스레드 안전하지 않다.
-`MultiThreadManager`와 `abWorkerThread`에서 `Lock`을 함께 사용해 안전하게 접근한다.
+`MultiThreadManager`와 `QueueThread`에서 `Lock`을 함께 사용해 안전하게 접근한다.
 직접 `JobQueue`를 사용할 때는 `Lock`을 별도로 관리해야 한다.
 
 ---

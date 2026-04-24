@@ -2,7 +2,7 @@ import time
 
 from python_library.job.job import IJob
 from python_library.thread.multi_thread_manager import MultiThreadManager
-from python_library.thread.worker_thread import abWorkerThread
+from python_library.thread.queue_thread import QueueThread
 
 
 class TestJob(IJob):
@@ -14,7 +14,7 @@ class TestJob(IJob):
         pass
 
 
-class TestWorkerThread(abWorkerThread):
+class TestWorkerThread(QueueThread):
     def __init__(self) -> None:
         super().__init__()
 

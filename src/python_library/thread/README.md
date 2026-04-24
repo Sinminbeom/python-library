@@ -9,8 +9,9 @@
 threading.Thread
 └── abThread (ABC)              # 스레드 기본 추상 클래스
     ├── abThreading (ABC)       # 반복 실행 스레드 (stop 신호까지 루프)
-    └── abWorkerThread (ABC)    # 공유 큐를 사용하는 작업 스레드
-        └── MultiThreadManager  # 여러 Worker Thread를 묶어서 관리
+    └── QueueThread (ABC)       # 공유 큐를 사용하는 작업 스레드
+        ├── QueueThreading      # 반복 실행 + 공유 큐
+        └── MultiThreadManager  # 여러 QueueThread를 묶어서 관리
 ```
 
 ---
@@ -33,14 +34,14 @@ thread = MyThread()
 thread.start()
 ```
 
-### 2. 워커 스레드 (abWorkerThread)
+### 2. 큐 기반 스레드 (QueueThread)
 
 공유 큐에서 Job을 꺼내 처리하는 패턴.
 
 ```python
-from python_library.thread.worker_thread import abWorkerThread
+from python_library.thread.queue_thread import QueueThread
 
-class MyWorkerThread(abWorkerThread):
+class MyWorkerThread(QueueThread):
     def action(self) -> None:
         while True:
             time.sleep(1)
@@ -121,7 +122,7 @@ while True:
 
 ### MultiThreadManager
 
-`abWorkerThread`를 상속하므로 그 자체도 스레드로 동작한다.
+`QueueThread`를 상속하므로 그 자체도 스레드로 동작한다.
 `start()` 호출 시 하위 스레드들을 모두 시작하고, `action()`을 실행한 후 `join()`으로 완료를 기다린다.
 
 ### stop 전파
