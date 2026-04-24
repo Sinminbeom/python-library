@@ -4,7 +4,7 @@ from queue import Queue
 from typing import List, Optional, MutableMapping
 
 from python_library.job.job import IJob
-from python_library.process.process import IQueueProcess
+from python_library.process.queue_process import IQueueProcess
 from python_library.thread.thread import abThread
 
 

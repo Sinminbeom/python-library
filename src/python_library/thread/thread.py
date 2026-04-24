@@ -1,9 +1,7 @@
 from abc import ABC, abstractmethod
-from threading import Thread, Event, Lock
-from typing import Optional, Dict
+from threading import Thread, Event
+from typing import Optional
 
-from python_library.job.job import IJob
-from python_library.job_queue.job_queue import IJobQueue
 from python_library.utils.class_name_generator import ClassNameGenerator
 
 
@@ -30,33 +28,6 @@ class IThread(ABC):
 
     @abstractmethod
     def is_running(self) -> bool: ...
-
-
-class IQueueThread(IThread):
-
-    @abstractmethod
-    def set_shared_job_queue(self, shared_job_queue: IJobQueue, shared_job_queue_lock: Lock) -> None: ...
-
-    @abstractmethod
-    def push_shared_job_queue(self, job: IJob) -> None: ...
-
-    @abstractmethod
-    def pop_shared_job_queue(self) -> IJob | None: ...
-
-    @abstractmethod
-    def size_shared_job_queue(self) -> int: ...
-
-    @abstractmethod
-    def set_shared_queue(self, shared_queue: Dict[str, IJobQueue], shared_queue_lock: Dict[str, Lock]) -> None: ...
-
-    @abstractmethod
-    def push_shared_queue(self, name: str, job: IJob) -> None: ...
-
-    @abstractmethod
-    def pop_shared_queue(self, name: str) -> Optional[IJob]: ...
-
-    @abstractmethod
-    def size_shared_queue(self, name: str) -> int: ...
 
 
 class abThread(Thread, IThread):
