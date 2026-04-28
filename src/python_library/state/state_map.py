@@ -10,8 +10,6 @@ if TYPE_CHECKING:
 
 
 class StateMap:
-    """state_id → abState 매핑 + StateManager 백레퍼런스 보유."""
-
     def __init__(self, state_map: Dict[Enum, abState]) -> None:
         self._state_map: Dict[Enum, abState] = state_map
         self._state_manager: Optional[StateManager] = None

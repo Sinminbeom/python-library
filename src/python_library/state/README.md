@@ -14,7 +14,7 @@ StateComponent             # 외부 컨테이너 (reservation 패턴)
 소유 관계:
 
 ```
-parent class
+owner class
 └── StateComponent
     └── StateManager
         └── StateMap
@@ -35,7 +35,7 @@ parent class
 
 `abState`는 두 가지 wrapper 메서드를 제공한다.
 
-- `base_on_enter(state_param_dto)`: `_is_run_proc_once` 리셋 + `parents_process` cache + `state_param_dto` 저장 후 `on_enter()` 호출
+- `base_on_enter(state_param_dto)`: `_is_run_proc_once` 리셋 + `owner` cache + `state_param_dto` 저장 후 `on_enter()` 호출
 - `base_on_proc_every_frame()`: `on_proc_once()`를 첫 frame에 한 번만 실행 후 매 frame마다 `on_proc_every_frame()` 호출
 
 상속 클래스는 `on_enter` / `on_leave` / `on_proc_once` / `on_proc_every_frame` 4개의 abstract 메서드만 구현한다.
@@ -44,6 +44,16 @@ parent class
 
 state 전환 시 다음 state로 전달되는 payload (`Optional[Any]`).
 새 state는 `self.state_param_dto`로 접근한다.
+
+### owner 타입 narrowing
+
+`abState.owner`의 base 타입은 `Any`. concrete state class에서 attribute annotation으로 narrow하면 IDE/pyright의 자동완성·타입체크 효과를 받을 수 있다.
+
+```python
+class GameState(abState):
+    owner: Game        # ← annotation override로 narrow
+    ...
+```
 
 ---
 
@@ -66,6 +76,8 @@ class E_GAME_STATE(IntEnum):
 
 
 class IdleState(abState):
+    owner: Game
+
     def on_enter(self):
         print(f"[IDLE] enter, dto={self.state_param_dto}")
 
@@ -76,25 +88,24 @@ class IdleState(abState):
         print("[IDLE] first frame")
 
     def on_proc_every_frame(self):
-        # 매 frame 호출
         pass
 
 
 class PlayingState(abState):
+    owner: Game
+
     def on_enter(self):
-        # state_param_dto에서 시작 정보 받기
         score = self.state_param_dto.get("score", 0) if self.state_param_dto else 0
         print(f"[PLAYING] start with score={score}")
 
     def on_leave(self): pass
     def on_proc_once(self): pass
     def on_proc_every_frame(self):
-        # parents_process(parent class)에 직접 접근 가능
-        if self.parents_process.is_game_over():
-            self.parents_process.state_component.change_state(E_GAME_STATE.GAME_OVER)
+        if self.owner.is_game_over():
+            self.owner.state_component.change_state(E_GAME_STATE.GAME_OVER)
 ```
 
-### 2. parent class에 StateComponent 부착
+### 2. owner class에 StateComponent 부착
 
 ```python
 from python_library.state import StateComponent
@@ -102,36 +113,32 @@ from python_library.state import StateComponent
 
 class Game:
     def __init__(self):
-        # state 인스턴스들 등록
-        state_map = StateMap({})  # 빈 dict로 시작
+        state_map = StateMap({})
         state_map._state_map = {
             E_GAME_STATE.IDLE: IdleState(state_map, E_GAME_STATE.IDLE),
             E_GAME_STATE.PLAYING: PlayingState(state_map, E_GAME_STATE.PLAYING),
         }
 
-        # StateComponent 부착 — 초기 state로 IDLE 진입
         self.state_component = StateComponent(
-            parent_process=self,
+            owner=self,
             state_map=state_map,
             init_state_id=E_GAME_STATE.IDLE,
         )
 
     def is_game_over(self) -> bool:
-        return False  # 게임 로직
+        return False
 
     def tick(self):
-        # 매 frame 루프
-        self.state_component.on_change_state()       # 예약된 전환 적용
-        self.state_component.on_proc_every_frame()   # 현재 state 진행
+        self.state_component.on_change_state()
+        self.state_component.on_proc_every_frame()
 ```
 
 ### 3. state 전환
 
 ```python
 game = Game()
-game.tick()  # IdleState 첫 frame: on_proc_once + on_proc_every_frame
+game.tick()
 
-# 어디서든 전환 예약
 game.state_component.change_state(
     E_GAME_STATE.PLAYING,
     state_param_dto={"score": 0, "level": 1},
@@ -154,7 +161,7 @@ game.tick()  # 예약 적용 → IdleState.on_leave → PlayingState.base_on_ent
 | `on_leave()` (abstract) | state 떠날 때 1회 호출 |
 | `on_proc_once()` (abstract) | state 진입 후 첫 frame 1회 호출 |
 | `on_proc_every_frame()` (abstract) | state 활성 동안 매 frame 호출 |
-| `parents_process` | base_on_enter 시 자동 cache되는 parent 참조 |
+| `owner` | base_on_enter 시 자동 cache되는 owner 참조 (`Any`, concrete에서 narrow 권장) |
 | `state_param_dto` | base_on_enter 시 저장된 payload |
 
 ### `StateComponent`
@@ -165,6 +172,7 @@ game.tick()  # 예약 적용 → IdleState.on_leave → PlayingState.base_on_ent
 | `on_change_state()` | 예약된 전환을 실제 적용 (frame 시작 시 호출 권장) |
 | `on_proc_once()` | 현재 state의 `on_proc_once` 위임 |
 | `on_proc_every_frame()` | 현재 state의 `base_on_proc_every_frame` 위임 |
+| `get_owner()` | owner 반환 |
 | `get_state_manager()` | 내부 StateManager 반환 |
 
 ### `StateManager`
@@ -181,9 +189,9 @@ game.tick()  # 예약 적용 → IdleState.on_leave → PlayingState.base_on_ent
 
 ```python
 while running:
-    game.state_component.on_change_state()      # 1) 예약된 전환 적용
-    game.state_component.on_proc_every_frame()  # 2) 현재 state 진행
-    time.sleep(1 / 60)                          # 60 FPS
+    game.state_component.on_change_state()
+    game.state_component.on_proc_every_frame()
+    time.sleep(1 / 60)
 ```
 
 `change_state`는 어느 시점에 호출해도 안전 — 항상 다음 frame 시작 시점에 적용된다.

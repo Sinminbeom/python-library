@@ -11,26 +11,11 @@ if TYPE_CHECKING:
 
 
 class abState(ABC):
-    """
-    Tetris C# abState 동등 클래스.
-
-    Lifecycle:
-      base_on_enter(state_param_dto)
-        -> _is_run_proc_once 리셋
-        -> parents_process cache
-        -> state_param_dto 저장
-        -> on_enter()
-
-      base_on_proc_every_frame()
-        -> on_proc_once() 1회
-        -> on_proc_every_frame() 매 frame
-    """
-
     def __init__(self, state_map: StateMap, state_id: Enum) -> None:
         self.state_map: StateMap = state_map
         self.state_id: Enum = state_id
         self._is_run_proc_once: bool = False
-        self.parents_process: Any = None
+        self.owner: Any = None
         self.state_param_dto: Optional[Any] = None
 
     def get_state_manager(self) -> Optional[StateManager]:
@@ -44,19 +29,19 @@ class abState(ABC):
             return None
         return mgr.get_parent_state_component()
 
-    def get_parents_process(self) -> Any:
+    def get_owner(self) -> Any:
         component = self.get_state_component()
         if component is None:
             return None
-        return component.get_parent_process()
+        return component.get_owner()
 
-    def _set_parent_process(self) -> None:
-        self.parents_process = self.get_parents_process()
+    def _set_owner(self) -> None:
+        self.owner = self.get_owner()
 
     def base_on_enter(self, state_param_dto: Optional[Any] = None) -> None:
         self._is_run_proc_once = False
         self.state_param_dto = state_param_dto
-        self._set_parent_process()
+        self._set_owner()
         self.on_enter()
 
     def base_on_proc_every_frame(self) -> None:
