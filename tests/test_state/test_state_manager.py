@@ -1,6 +1,6 @@
 from enum import IntEnum
 
-from python_library.state import abState, StateLists, StateComponents
+from python_library.state import abState, StateComponent, StateMap
 
 
 class E_TEST(IntEnum):
@@ -24,14 +24,14 @@ class _RecordingState(abState):
 
 def _build():
     _RecordingState.log = []
-    sl = StateLists({})
-    sl._state_list = {
-        E_TEST.A: _RecordingState(sl, E_TEST.A),
-        E_TEST.B: _RecordingState(sl, E_TEST.B),
-        E_TEST.C: _RecordingState(sl, E_TEST.C),
+    sm = StateMap({})
+    sm._state_map = {
+        E_TEST.A: _RecordingState(sm, E_TEST.A),
+        E_TEST.B: _RecordingState(sm, E_TEST.B),
+        E_TEST.C: _RecordingState(sm, E_TEST.C),
     }
-    components = StateComponents(parent_process="parent", state_lists=sl)
-    return components.get_state_manager()
+    component = StateComponent(parent_process="parent", state_map=sm)
+    return component.get_state_manager()
 
 
 def test_change_state_immediate_calls_on_leave_then_base_on_enter():
@@ -74,7 +74,7 @@ def test_get_current_state_returns_instance():
     assert current is mgr.get_state(E_TEST.C)
 
 
-def test_state_manager_has_back_reference_from_state_lists():
+def test_state_manager_has_back_reference_from_state_map():
     mgr = _build()
     state = mgr.get_state(E_TEST.A)
-    assert state.state_lists.get_state_manager() is mgr
+    assert state.state_map.get_state_manager() is mgr

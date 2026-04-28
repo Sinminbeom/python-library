@@ -1,6 +1,6 @@
 from enum import IntEnum
 
-from python_library.state import abState, StateLists
+from python_library.state import abState, StateMap
 
 
 class E_TEST(IntEnum):
@@ -9,8 +9,8 @@ class E_TEST(IntEnum):
 
 
 class _TrackingState(abState):
-    def __init__(self, state_lists, state_id):
-        super().__init__(state_lists, state_id)
+    def __init__(self, state_map, state_id):
+        super().__init__(state_map, state_id)
         self.calls = []
 
     def on_enter(self):
@@ -26,15 +26,15 @@ class _TrackingState(abState):
         self.calls.append(("on_proc_every_frame",))
 
 
-def _build_state_lists():
-    sl = StateLists({})
-    sl._state_list = {E_TEST.A: _TrackingState(sl, E_TEST.A)}
-    return sl
+def _build_state_map():
+    sm = StateMap({})
+    sm._state_map = {E_TEST.A: _TrackingState(sm, E_TEST.A)}
+    return sm
 
 
 def test_base_on_enter_resets_proc_once_flag_and_caches_parent():
-    sl = _build_state_lists()
-    state = sl.get_state(E_TEST.A)
+    sm = _build_state_map()
+    state = sm.get_state(E_TEST.A)
     state._is_run_proc_once = True
 
     state.base_on_enter(state_param_dto={"x": 1})
@@ -45,8 +45,8 @@ def test_base_on_enter_resets_proc_once_flag_and_caches_parent():
 
 
 def test_base_on_enter_default_dto_is_none():
-    sl = _build_state_lists()
-    state = sl.get_state(E_TEST.A)
+    sm = _build_state_map()
+    state = sm.get_state(E_TEST.A)
 
     state.base_on_enter()
 
@@ -55,8 +55,8 @@ def test_base_on_enter_default_dto_is_none():
 
 
 def test_base_on_proc_every_frame_runs_on_proc_once_only_once():
-    sl = _build_state_lists()
-    state = sl.get_state(E_TEST.A)
+    sm = _build_state_map()
+    state = sm.get_state(E_TEST.A)
 
     state.base_on_proc_every_frame()
     state.base_on_proc_every_frame()
@@ -71,8 +71,8 @@ def test_base_on_proc_every_frame_runs_on_proc_once_only_once():
 
 
 def test_base_on_enter_then_base_on_proc_every_frame_full_lifecycle():
-    sl = _build_state_lists()
-    state = sl.get_state(E_TEST.A)
+    sm = _build_state_map()
+    state = sm.get_state(E_TEST.A)
 
     state.base_on_enter()
     state.base_on_proc_every_frame()
@@ -87,8 +87,8 @@ def test_base_on_enter_then_base_on_proc_every_frame_full_lifecycle():
 
 
 def test_re_enter_resets_proc_once():
-    sl = _build_state_lists()
-    state = sl.get_state(E_TEST.A)
+    sm = _build_state_map()
+    state = sm.get_state(E_TEST.A)
 
     state.base_on_enter()
     state.base_on_proc_every_frame()

@@ -3,11 +3,11 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any, Optional
 
-from python_library.state.state_lists import StateLists
 from python_library.state.state_manager import StateManager
+from python_library.state.state_map import StateMap
 
 
-class StateComponents:
+class StateComponent:
     """
     process가 보유하는 state machine 컨테이너.
 
@@ -20,11 +20,11 @@ class StateComponents:
     def __init__(
         self,
         parent_process: Any,
-        state_lists: StateLists,
+        state_map: StateMap,
         init_state_id: Optional[Enum] = None,
     ) -> None:
         self._parent_process: Any = parent_process
-        self._state_manager: StateManager = StateManager(state_lists, self)
+        self._state_manager: StateManager = StateManager(state_map, self)
         self._reserve_state_id: Optional[Enum] = None
         self._reserve_state_param_dto: Optional[Any] = None
 

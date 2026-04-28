@@ -5,9 +5,9 @@ from enum import Enum
 from typing import Any, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from python_library.state.state_lists import StateLists
+    from python_library.state.state_component import StateComponent
     from python_library.state.state_manager import StateManager
-    from python_library.state.state_components import StateComponents
+    from python_library.state.state_map import StateMap
 
 
 class abState(ABC):
@@ -26,29 +26,29 @@ class abState(ABC):
         -> on_proc_every_frame() 매 frame
     """
 
-    def __init__(self, state_lists: StateLists, state_id: Enum) -> None:
-        self.state_lists: StateLists = state_lists
+    def __init__(self, state_map: StateMap, state_id: Enum) -> None:
+        self.state_map: StateMap = state_map
         self.state_id: Enum = state_id
         self._is_run_proc_once: bool = False
         self.parents_process: Any = None
         self.state_param_dto: Optional[Any] = None
 
     def get_state_manager(self) -> Optional[StateManager]:
-        if self.state_lists is None:
+        if self.state_map is None:
             return None
-        return self.state_lists.get_state_manager()
+        return self.state_map.get_state_manager()
 
-    def get_state_components(self) -> Optional[StateComponents]:
+    def get_state_component(self) -> Optional[StateComponent]:
         mgr = self.get_state_manager()
         if mgr is None:
             return None
-        return mgr.get_parents_state_components()
+        return mgr.get_parent_state_component()
 
     def get_parents_process(self) -> Any:
-        components = self.get_state_components()
-        if components is None:
+        component = self.get_state_component()
+        if component is None:
             return None
-        return components.get_parent_process()
+        return component.get_parent_process()
 
     def _set_parent_process(self) -> None:
         self.parents_process = self.get_parents_process()

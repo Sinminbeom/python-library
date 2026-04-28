@@ -1,23 +1,23 @@
 # state
 
-상태 머신(state machine) 4-layer 패키지. 어떤 클래스든 `StateComponents`를 보유시키면 상태 기반 동작을 적용할 수 있다.
+상태 머신(state machine) 4-layer 패키지. 어떤 클래스든 `StateComponent`를 보유시키면 상태 기반 동작을 적용할 수 있다.
 
 ## 클래스 구조
 
 ```
 abState (ABC)              # 단일 state 추상 클래스 (lifecycle 메서드)
-StateLists                 # state_id → abState 매핑 + StateManager 백레퍼런스
+StateMap                   # state_id → abState 매핑 + StateManager 백레퍼런스
 StateManager               # state 전환 (즉시 적용)
-StateComponents            # 외부 컨테이너 (reservation 패턴)
+StateComponent             # 외부 컨테이너 (reservation 패턴)
 ```
 
 소유 관계:
 
 ```
 parent class
-└── StateComponents
+└── StateComponent
     └── StateManager
-        └── StateLists
+        └── StateMap
             └── abState 인스턴스들
 ```
 
@@ -27,7 +27,7 @@ parent class
 
 ### Reservation 패턴
 
-`StateComponents.change_state(id, dto)`는 즉시 전환하지 않고 **예약만** 한다.
+`StateComponent.change_state(id, dto)`는 즉시 전환하지 않고 **예약만** 한다.
 다음 frame에서 `on_change_state()`가 호출될 때 비로소 실제 전환이 일어난다.
 이렇게 분리하면 frame 내부에서 state를 바꿔도 현재 frame의 처리가 안전하게 끝난 뒤 적용된다.
 
@@ -55,7 +55,7 @@ state 전환 시 다음 state로 전달되는 payload (`Optional[Any]`).
 
 ```python
 from enum import IntEnum
-from python_library.state import abState, StateLists
+from python_library.state import abState, StateMap
 
 
 class E_GAME_STATE(IntEnum):
@@ -91,28 +91,28 @@ class PlayingState(abState):
     def on_proc_every_frame(self):
         # parents_process(parent class)에 직접 접근 가능
         if self.parents_process.is_game_over():
-            self.parents_process.state_components.change_state(E_GAME_STATE.GAME_OVER)
+            self.parents_process.state_component.change_state(E_GAME_STATE.GAME_OVER)
 ```
 
-### 2. parent class에 StateComponents 부착
+### 2. parent class에 StateComponent 부착
 
 ```python
-from python_library.state import StateComponents
+from python_library.state import StateComponent
 
 
 class Game:
     def __init__(self):
         # state 인스턴스들 등록
-        state_lists = StateLists({})  # 빈 dict로 시작
-        state_lists._state_list = {
-            E_GAME_STATE.IDLE: IdleState(state_lists, E_GAME_STATE.IDLE),
-            E_GAME_STATE.PLAYING: PlayingState(state_lists, E_GAME_STATE.PLAYING),
+        state_map = StateMap({})  # 빈 dict로 시작
+        state_map._state_map = {
+            E_GAME_STATE.IDLE: IdleState(state_map, E_GAME_STATE.IDLE),
+            E_GAME_STATE.PLAYING: PlayingState(state_map, E_GAME_STATE.PLAYING),
         }
 
-        # StateComponents 부착 — 초기 state로 IDLE 진입
-        self.state_components = StateComponents(
+        # StateComponent 부착 — 초기 state로 IDLE 진입
+        self.state_component = StateComponent(
             parent_process=self,
-            state_lists=state_lists,
+            state_map=state_map,
             init_state_id=E_GAME_STATE.IDLE,
         )
 
@@ -121,8 +121,8 @@ class Game:
 
     def tick(self):
         # 매 frame 루프
-        self.state_components.on_change_state()       # 예약된 전환 적용
-        self.state_components.on_proc_every_frame()   # 현재 state 진행
+        self.state_component.on_change_state()       # 예약된 전환 적용
+        self.state_component.on_proc_every_frame()   # 현재 state 진행
 ```
 
 ### 3. state 전환
@@ -132,7 +132,7 @@ game = Game()
 game.tick()  # IdleState 첫 frame: on_proc_once + on_proc_every_frame
 
 # 어디서든 전환 예약
-game.state_components.change_state(
+game.state_component.change_state(
     E_GAME_STATE.PLAYING,
     state_param_dto={"score": 0, "level": 1},
 )
@@ -157,7 +157,7 @@ game.tick()  # 예약 적용 → IdleState.on_leave → PlayingState.base_on_ent
 | `parents_process` | base_on_enter 시 자동 cache되는 parent 참조 |
 | `state_param_dto` | base_on_enter 시 저장된 payload |
 
-### `StateComponents`
+### `StateComponent`
 
 | 메서드 | 설명 |
 |---|---|
@@ -181,9 +181,9 @@ game.tick()  # 예약 적용 → IdleState.on_leave → PlayingState.base_on_ent
 
 ```python
 while running:
-    game.state_components.on_change_state()      # 1) 예약된 전환 적용
-    game.state_components.on_proc_every_frame()  # 2) 현재 state 진행
-    time.sleep(1 / 60)                           # 60 FPS
+    game.state_component.on_change_state()      # 1) 예약된 전환 적용
+    game.state_component.on_proc_every_frame()  # 2) 현재 state 진행
+    time.sleep(1 / 60)                          # 60 FPS
 ```
 
 `change_state`는 어느 시점에 호출해도 안전 — 항상 다음 frame 시작 시점에 적용된다.
