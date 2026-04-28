@@ -4,10 +4,10 @@ from enum import Enum
 from typing import Any, Optional, TYPE_CHECKING
 
 from python_library.state.state import abState
-from python_library.state.state_lists import StateLists
+from python_library.state.state_map import StateMap
 
 if TYPE_CHECKING:
-    from python_library.state.state_components import StateComponents
+    from python_library.state.state_component import StateComponent
 
 
 class StateManager:
@@ -15,19 +15,19 @@ class StateManager:
 
     def __init__(
         self,
-        state_lists: StateLists,
-        parents_state_components: StateComponents,
+        state_map: StateMap,
+        parent_state_component: StateComponent,
     ) -> None:
-        self._parents_state_components: StateComponents = parents_state_components
+        self._parent_state_component: StateComponent = parent_state_component
         self._current_state_id: Optional[Enum] = None
-        self._state_lists: StateLists = state_lists
-        state_lists.set_state_manager(self)
+        self._state_map: StateMap = state_map
+        state_map.set_state_manager(self)
 
-    def get_parents_state_components(self) -> StateComponents:
-        return self._parents_state_components
+    def get_parent_state_component(self) -> StateComponent:
+        return self._parent_state_component
 
     def get_state(self, state_id: Enum) -> abState:
-        return self._state_lists.get_state(state_id)
+        return self._state_map.get_state(state_id)
 
     def change_state(self, state_id: Enum, state_param_dto: Optional[Any] = None) -> abState:
         if self._current_state_id is not None:
@@ -41,7 +41,7 @@ class StateManager:
     def get_current_state(self) -> Optional[abState]:
         if self._current_state_id is None:
             return None
-        return self._state_lists.get_state(self._current_state_id)
+        return self._state_map.get_state(self._current_state_id)
 
     def get_current_state_id(self) -> Optional[Enum]:
         return self._current_state_id
