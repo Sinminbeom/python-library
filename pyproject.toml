@@ -32,3 +32,7 @@ typeCheckingMode = "basic"
 reportOptionalSubscript = "none"
 reportOptionalMemberAccess = "none"
 reportOptionalContextManager = "none"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
