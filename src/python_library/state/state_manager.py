@@ -11,8 +11,6 @@ if TYPE_CHECKING:
 
 
 class StateManager:
-    """현재 state 관리 + 즉시 전환 (OnLeave → BaseOnEnter)."""
-
     def __init__(
         self,
         state_map: StateMap,

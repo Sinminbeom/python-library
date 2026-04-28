@@ -31,7 +31,7 @@ def _build_component(init_state_id=None):
         E_TEST.A: _State(sm, E_TEST.A),
         E_TEST.B: _State(sm, E_TEST.B),
     }
-    return StateComponent(parent_process="parent_obj", state_map=sm, init_state_id=init_state_id)
+    return StateComponent(owner="owner_obj", state_map=sm, init_state_id=init_state_id)
 
 
 def test_init_state_id_triggers_change_state_immediately():
@@ -112,13 +112,13 @@ def test_state_param_dto_propagated_to_new_state_on_enter():
     assert state_b.state_param_dto == payload
 
 
-def test_parent_process_cached_in_state_after_enter():
+def test_owner_cached_in_state_after_enter():
     component = _build_component(init_state_id=E_TEST.A)
 
     state_a = component.get_state_manager().get_state(E_TEST.A)
-    assert state_a.parents_process == "parent_obj"
+    assert state_a.owner == "owner_obj"
 
 
-def test_get_parent_process_returns_owner():
+def test_get_owner_returns_owner():
     component = _build_component()
-    assert component.get_parent_process() == "parent_obj"
+    assert component.get_owner() == "owner_obj"

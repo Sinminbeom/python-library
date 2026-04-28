@@ -30,7 +30,7 @@ def _build():
         E_TEST.B: _RecordingState(sm, E_TEST.B),
         E_TEST.C: _RecordingState(sm, E_TEST.C),
     }
-    component = StateComponent(parent_process="parent", state_map=sm)
+    component = StateComponent(owner="parent", state_map=sm)
     return component.get_state_manager()
 
 
