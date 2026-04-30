@@ -1,19 +1,21 @@
 from multiprocessing import Manager
 from threading import Lock
 from queue import Queue
-from typing import List, Optional, MutableMapping
+from typing import Generic, List, MutableMapping, Optional, TypeVar
 
 from python_library.job.job import IJob
 from python_library.process.queue_process import IQueueProcess
 from python_library.thread.thread import abThread
 
+T = TypeVar("T")
 
-class MultiProcessManager(abThread):
+
+class MultiProcessManager(abThread, Generic[T]):
     def __init__(self) -> None:
         super().__init__()
         self._manager = Manager()
 
-        self._process_list: List[IQueueProcess] = list()
+        self._process_list: List[IQueueProcess[T]] = list()
 
         self._shared_job_queue: Queue = self._manager.Queue()
         self._shared_job_queue_lock: Lock = self._manager.Lock()
@@ -25,7 +27,7 @@ class MultiProcessManager(abThread):
 
         pass
 
-    def append(self, process: IQueueProcess) -> None:
+    def append(self, process: IQueueProcess[T]) -> None:
         process.set_shared_job_queue(
             self._shared_job_queue, self._shared_job_queue_lock
         )
@@ -60,11 +62,11 @@ class MultiProcessManager(abThread):
 
     ##########################################################################
 
-    def push_shared_queue(self, process_name: str, job: IJob) -> None:
+    def push_shared_queue(self, process_name: str, item: T) -> None:
         with self._shared_queue_lock[process_name]:
-            self._shared_queue[process_name].put(job)
+            self._shared_queue[process_name].put(item)
 
-    def pop_shared_queue(self, process_name: str) -> Optional[IJob]:
+    def pop_shared_queue(self, process_name: str) -> Optional[T]:
         with self._shared_queue_lock[process_name]:
             if self._shared_queue[process_name].empty():
                 return None

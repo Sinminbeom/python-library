@@ -1,13 +1,15 @@
 from queue import Queue
 from threading import Lock
 from abc import abstractmethod
-from typing import Optional, MutableMapping
+from typing import Generic, MutableMapping, Optional, TypeVar
 
 from python_library.job.job import IJob
 from python_library.process.process import IProcess, abProcess
 
+T = TypeVar("T")
 
-class IQueueProcess(IProcess):
+
+class IQueueProcess(IProcess, Generic[T]):
 
     @abstractmethod
     def set_shared_job_queue(self, shared_job_queue: Queue, shared_job_queue_lock: Lock) -> None: ...
@@ -25,16 +27,16 @@ class IQueueProcess(IProcess):
     def set_shared_queue(self, shared_queue: MutableMapping[str, Queue], shared_queue_lock: MutableMapping[str, Lock]) -> None: ...
 
     @abstractmethod
-    def push_shared_queue(self, process_name: str, job: IJob) -> None: ...
+    def push_shared_queue(self, process_name: str, item: T) -> None: ...
 
     @abstractmethod
-    def pop_shared_queue(self, process_name: str) -> Optional[IJob]: ...
+    def pop_shared_queue(self, process_name: str) -> Optional[T]: ...
 
     @abstractmethod
     def size_shared_queue(self, process_name: str) -> int: ...
 
 
-class QueueProcess(abProcess, IQueueProcess):
+class QueueProcess(abProcess, IQueueProcess[T], Generic[T]):
 
     def __init__(self, name: str | None = None) -> None:
         super().__init__(name=name)
@@ -69,12 +71,12 @@ class QueueProcess(abProcess, IQueueProcess):
         self._shared_queue = shared_queue
         self._shared_queue_lock = shared_queue_lock
 
-    def push_shared_queue(self, process_name: str, job: IJob) -> None:
+    def push_shared_queue(self, process_name: str, item: T) -> None:
         assert self._shared_queue_lock is not None
         with self._shared_queue_lock[process_name]:
-            self._shared_queue[process_name].put(job)
+            self._shared_queue[process_name].put(item)
 
-    def pop_shared_queue(self, process_name: str) -> Optional[IJob]:
+    def pop_shared_queue(self, process_name: str) -> Optional[T]:
         assert self._shared_queue_lock is not None
         with self._shared_queue_lock[process_name]:
             if self._shared_queue[process_name].empty():
@@ -87,7 +89,7 @@ class QueueProcess(abProcess, IQueueProcess):
             return self._shared_queue[process_name].qsize()
 
 
-class QueueProcessing(QueueProcess):
+class QueueProcessing(QueueProcess[T], Generic[T]):
     def run(self) -> None:
         try:
             while not self.is_stop():
