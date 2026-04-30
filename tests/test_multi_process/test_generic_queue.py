@@ -61,3 +61,16 @@ def test_pop_returns_none_when_empty():
     _wire(process)
 
     assert process.pop_shared_queue(process.name) is None
+
+
+def test_shared_job_queue_generic_payload():
+    process = StrEchoProcess()
+    manager = Manager()
+    process.set_shared_job_queue(manager.Queue(), manager.Lock())
+
+    process.push_shared_job_queue("envelope-job-1")
+    assert process.size_shared_job_queue() == 1
+
+    popped = process.pop_shared_job_queue()
+    assert popped == "envelope-job-1"
+    assert process.size_shared_job_queue() == 0
