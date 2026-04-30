@@ -75,3 +75,16 @@ def test_job_queue_generic_str():
 
     queue.clear()
     assert queue.is_empty() is True
+
+
+def test_shared_job_queue_generic_payload():
+    thread = StrEchoThread()
+    job_queue: JobQueue[str] = JobQueue()
+    thread.set_shared_job_queue(job_queue, Lock())
+
+    thread.push_shared_job_queue("envelope-job-1")
+    assert thread.size_shared_job_queue() == 1
+
+    popped = thread.pop_shared_job_queue()
+    assert popped == "envelope-job-1"
+    assert thread.size_shared_job_queue() == 0

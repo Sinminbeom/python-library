@@ -2,7 +2,6 @@ from threading import Lock
 from typing import Dict, Generic, List, Optional, TypeVar
 from abc import abstractmethod
 
-from python_library.job.job import IJob
 from python_library.job_queue.job_queue import IJobQueue, JobQueue
 from python_library.thread.queue_thread import IQueueThread, QueueThread
 
@@ -15,7 +14,7 @@ class MultiThreadManager(QueueThread[T], Generic[T]):
 
         self._threads: List[IQueueThread[T]] = list()
 
-        self._shared_job_queue: IJobQueue[IJob] = JobQueue[IJob]()
+        self._shared_job_queue: IJobQueue[T] = JobQueue[T]()
         self._shared_job_queue_lock: Lock = Lock()
 
         self._shared_queue: Dict[str, IJobQueue[T]] = dict()
