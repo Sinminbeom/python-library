@@ -1,16 +1,18 @@
 from abc import abstractmethod
-from typing import Optional, Dict
+from typing import Dict, Generic, Optional, TypeVar
 from threading import Lock
 
 from python_library.job.job import IJob
 from python_library.job_queue.job_queue import IJobQueue, JobQueue
 from python_library.thread.thread import IThread, abThread
 
+T = TypeVar("T")
 
-class IQueueThread(IThread):
+
+class IQueueThread(IThread, Generic[T]):
 
     @abstractmethod
-    def set_shared_job_queue(self, shared_job_queue: IJobQueue, shared_job_queue_lock: Lock) -> None: ...
+    def set_shared_job_queue(self, shared_job_queue: IJobQueue[IJob], shared_job_queue_lock: Lock) -> None: ...
 
     @abstractmethod
     def push_shared_job_queue(self, job: IJob) -> None: ...
@@ -22,33 +24,33 @@ class IQueueThread(IThread):
     def size_shared_job_queue(self) -> int: ...
 
     @abstractmethod
-    def set_shared_queue(self, shared_queue: Dict[str, IJobQueue], shared_queue_lock: Dict[str, Lock]) -> None: ...
+    def set_shared_queue(self, shared_queue: Dict[str, IJobQueue[T]], shared_queue_lock: Dict[str, Lock]) -> None: ...
 
     @abstractmethod
-    def push_shared_queue(self, name: str, job: IJob) -> None: ...
+    def push_shared_queue(self, name: str, item: T) -> None: ...
 
     @abstractmethod
-    def pop_shared_queue(self, name: str) -> Optional[IJob]: ...
+    def pop_shared_queue(self, name: str) -> Optional[T]: ...
 
     @abstractmethod
     def size_shared_queue(self, name: str) -> int: ...
 
 
-class QueueThread(abThread, IQueueThread):
+class QueueThread(abThread, IQueueThread[T], Generic[T]):
     def __init__(self, name: Optional[str] = None) -> None:
         super().__init__(name=name)
-        self._shared_job_queue: Optional[IJobQueue] = None
+        self._shared_job_queue: Optional[IJobQueue[IJob]] = None
         self._shared_job_queue_lock: Optional[Lock] = None
-        self._shared_queue: Optional[Dict[str, IJobQueue]] = None
+        self._shared_queue: Optional[Dict[str, IJobQueue[T]]] = None
         self._shared_queue_lock: Optional[Dict[str, Lock]] = None
 
     def _allocate_shared_queue(self) -> None:
-        self._shared_queue[self.name] = JobQueue()
+        self._shared_queue[self.name] = JobQueue[T]()
         self._shared_queue_lock[self.name] = Lock()
 
     ##########################################################################
 
-    def set_shared_job_queue(self, shared_job_queue: IJobQueue, shared_job_queue_lock: Lock) -> None:
+    def set_shared_job_queue(self, shared_job_queue: IJobQueue[IJob], shared_job_queue_lock: Lock) -> None:
         self._shared_job_queue = shared_job_queue
         self._shared_job_queue_lock = shared_job_queue_lock
 
@@ -68,17 +70,17 @@ class QueueThread(abThread, IQueueThread):
 
     ##########################################################################
 
-    def set_shared_queue(self, shared_queue: Dict[str, IJobQueue], shared_queue_lock: Dict[str, Lock]) -> None:
+    def set_shared_queue(self, shared_queue: Dict[str, IJobQueue[T]], shared_queue_lock: Dict[str, Lock]) -> None:
         self._shared_queue = shared_queue
         self._shared_queue_lock = shared_queue_lock
         self._allocate_shared_queue()
 
-    def push_shared_queue(self, name: str, job: IJob) -> None:
+    def push_shared_queue(self, name: str, item: T) -> None:
         assert self._shared_queue_lock is not None
         with self._shared_queue_lock[name]:
-            self._shared_queue[name].append(job)
+            self._shared_queue[name].append(item)
 
-    def pop_shared_queue(self, name: str) -> Optional[IJob]:
+    def pop_shared_queue(self, name: str) -> Optional[T]:
         assert self._shared_queue_lock is not None
         with self._shared_queue_lock[name]:
             if self._shared_queue[name].is_empty():
@@ -95,7 +97,7 @@ class QueueThread(abThread, IQueueThread):
         pass
 
 
-class QueueThreading(QueueThread):
+class QueueThreading(QueueThread[T], Generic[T]):
     def run(self) -> None:
         try:
             while not self.is_stop():
