@@ -1,16 +1,16 @@
 from abc import abstractmethod
-from typing import List, Optional
+from typing import Generic, List, Optional, TypeVar
 
-from python_library.job.job import IJob
+T = TypeVar("T")
 
 
-class IJobQueue:
+class IJobQueue(Generic[T]):
     @abstractmethod
-    def append(self, job: IJob) -> None:
+    def append(self, item: T) -> None:
         pass
 
     @abstractmethod
-    def pop(self) -> Optional[IJob]:
+    def pop(self) -> Optional[T]:
         pass
 
     @abstractmethod
@@ -26,14 +26,14 @@ class IJobQueue:
         pass
 
 
-class JobQueue(IJobQueue):
+class JobQueue(IJobQueue[T], Generic[T]):
     def __init__(self) -> None:
-        self._job_queue: List[IJob] = list()
+        self._job_queue: List[T] = list()
 
-    def append(self, job: IJob) -> None:
-        self._job_queue.append(job)
+    def append(self, item: T) -> None:
+        self._job_queue.append(item)
 
-    def pop(self) -> Optional[IJob]:
+    def pop(self) -> Optional[T]:
         if self.is_empty():
             return None
 
