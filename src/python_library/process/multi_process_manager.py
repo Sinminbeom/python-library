@@ -3,7 +3,6 @@ from threading import Lock
 from queue import Queue
 from typing import Generic, List, MutableMapping, Optional, TypeVar
 
-from python_library.job.job import IJob
 from python_library.process.queue_process import IQueueProcess
 from python_library.thread.thread import abThread
 
@@ -45,11 +44,11 @@ class MultiProcessManager(abThread, Generic[T]):
 
     ##########################################################################
 
-    def push_shared_job_queue(self, job: IJob) -> None:
+    def push_shared_job_queue(self, item: T) -> None:
         with self._shared_job_queue_lock:
-            self._shared_job_queue.put(job)
+            self._shared_job_queue.put(item)
 
-    def pop_shared_job_queue(self) -> IJob | None:
+    def pop_shared_job_queue(self) -> Optional[T]:
         with self._shared_job_queue_lock:
             if self._shared_job_queue.empty():
                 return None

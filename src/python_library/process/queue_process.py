@@ -3,7 +3,6 @@ from threading import Lock
 from abc import abstractmethod
 from typing import Generic, MutableMapping, Optional, TypeVar
 
-from python_library.job.job import IJob
 from python_library.process.process import IProcess, abProcess
 
 T = TypeVar("T")
@@ -15,10 +14,10 @@ class IQueueProcess(IProcess, Generic[T]):
     def set_shared_job_queue(self, shared_job_queue: Queue, shared_job_queue_lock: Lock) -> None: ...
 
     @abstractmethod
-    def push_shared_job_queue(self, job: IJob) -> None: ...
+    def push_shared_job_queue(self, item: T) -> None: ...
 
     @abstractmethod
-    def pop_shared_job_queue(self) -> IJob | None: ...
+    def pop_shared_job_queue(self) -> Optional[T]: ...
 
     @abstractmethod
     def size_shared_job_queue(self) -> int: ...
@@ -51,11 +50,11 @@ class QueueProcess(abProcess, IQueueProcess[T], Generic[T]):
         self._shared_job_queue = shared_job_queue
         self._shared_job_queue_lock = shared_job_queue_lock
 
-    def push_shared_job_queue(self, job: IJob) -> None:
+    def push_shared_job_queue(self, item: T) -> None:
         with self._shared_job_queue_lock:
-            self._shared_job_queue.put(job)
+            self._shared_job_queue.put(item)
 
-    def pop_shared_job_queue(self) -> IJob | None:
+    def pop_shared_job_queue(self) -> Optional[T]:
         with self._shared_job_queue_lock:
             if self._shared_job_queue.empty():
                 return None
