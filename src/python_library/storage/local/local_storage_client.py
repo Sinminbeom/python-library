@@ -13,14 +13,11 @@ class LocalStorageClient(IStorageClient):
     SERVICE_NAME = "local"
     SCHEME = "file://"
 
-    def __init__(self, root_dir: str):
-        if not root_dir:
-            raise ValueError("root_dir is empty")
-
-        self._root_dir: Path = Path(root_dir).resolve()
+    def __init__(self):
+        pass
 
     def connect(self) -> None:
-        self._root_dir.mkdir(parents=True, exist_ok=True)
+        return
 
     def disconnect(self) -> None:
         return
@@ -31,31 +28,31 @@ class LocalStorageClient(IStorageClient):
         # local 구현에서는 options(metadata/tagging/multipart 등)는 의미가 없어 무시
         del options
 
-        dst_abs = self._resolve(dst_path)
-        dst_abs.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(src_path, dst_abs)
+        dst = self._resolve(dst_path)
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(src_path, dst)
 
     def download(self, src_path: str, dst_path: str) -> None:
-        src_abs = self._resolve(src_path)
+        src = self._resolve(src_path)
         dst_parent = Path(dst_path).parent
         if str(dst_parent):
             dst_parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(src_abs, dst_path)
+        shutil.copyfile(src, dst_path)
 
     def get_file_list(self, path: str) -> List[StorageFile]:
         files: List[StorageFile] = list()
 
-        prefix_abs = self._resolve(path)
+        prefix = self._resolve(path)
 
         # S3 list_objects_v2는 prefix가 디렉터리/파일 모두 매칭하므로 동일하게 처리
-        if prefix_abs.is_file():
-            files.append(self._to_storage_file(prefix_abs))
+        if prefix.is_file():
+            files.append(self._to_storage_file(prefix))
             return files
 
-        if not prefix_abs.exists():
+        if not prefix.exists():
             return files
 
-        for root, _dirs, names in os.walk(prefix_abs):
+        for root, _dirs, names in os.walk(prefix):
             root_path = Path(root)
             for name in names:
                 files.append(self._to_storage_file(root_path / name))
@@ -63,8 +60,7 @@ class LocalStorageClient(IStorageClient):
         return files
 
     def read(self, path: str) -> bytes:
-        abs_path = self._resolve(path)
-        return abs_path.read_bytes()
+        return self._resolve(path).read_bytes()
 
     def write(
         self, path: str, data: bytes, options: UploadOptions | None = None
@@ -79,15 +75,15 @@ class LocalStorageClient(IStorageClient):
         return self._resolve(path).exists()
 
     def copy(self, src_path: str, dst_path: str) -> None:
-        src_abs = self._resolve(src_path)
-        dst_abs = self._resolve(dst_path)
-        dst_abs.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(src_abs, dst_abs)
+        src = self._resolve(src_path)
+        dst = self._resolve(dst_path)
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(src, dst)
 
     def to_url(self, path: str) -> str:
         """
-        내부 표준 path (/root/key)를 file:// scheme url로 변환.
-        - "/root/key" -> "file://{abs root_dir}/root/key"
+        절대 fs 경로를 file:// scheme url로 변환.
+        - "/abs/path" -> "file:///abs/path"
         - 이미 "file://..."면 그대로 반환
         """
         if not path:
@@ -96,23 +92,17 @@ class LocalStorageClient(IStorageClient):
         if path.startswith(self.SCHEME):
             return path
 
-        abs_path = self._resolve(path)
-        return f"{self.SCHEME}{abs_path.as_posix()}"
-
-    def _resolve(self, path: str) -> Path:
-        """
-        /root/key 형태의 path를 root_dir 하위 절대 경로로 변환.
-        예 (root_dir=/data):
-            /myroot/foo/bar.txt → /data/myroot/foo/bar.txt
-        """
         if not path.startswith("/"):
             raise ValueError(f"Invalid path (must start with '/'): {path}")
 
-        rel = path.lstrip("/")
-        return self._root_dir / rel
+        return f"{self.SCHEME}{path}"
+
+    def _resolve(self, path: str) -> Path:
+        if not path.startswith("/"):
+            raise ValueError(f"Invalid path (must start with '/'): {path}")
+        return Path(path)
 
     def _to_storage_file(self, abs_path: Path) -> StorageFile:
-        rel = abs_path.relative_to(self._root_dir).as_posix()
-        std_path = f"/{rel}"
+        std_path = abs_path.as_posix()
         mtime = datetime.fromtimestamp(abs_path.stat().st_mtime, tz=timezone.utc)
         return StorageFile(std_path, mtime)
