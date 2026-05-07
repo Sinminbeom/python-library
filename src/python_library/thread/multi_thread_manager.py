@@ -1,6 +1,5 @@
 from threading import Lock
 from typing import Dict, Generic, List, Optional, TypeVar
-from abc import abstractmethod
 
 from python_library.job_queue.job_queue import IJobQueue, JobQueue
 from python_library.thread.queue_thread import IQueueThread, QueueThread
@@ -40,7 +39,6 @@ class MultiThreadManager(QueueThread[T], Generic[T]):
         except Exception as e:
             raise e
 
-    @abstractmethod
     def action(self) -> None:
         pass
 
