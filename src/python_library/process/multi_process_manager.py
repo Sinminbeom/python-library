@@ -92,7 +92,6 @@ class MultiProcessManager(abThread, Generic[T]):
             raise e
 
     def action(self) -> None:
-        print("MultiProcessManager action()")
         pass
 
     def stop(self):
