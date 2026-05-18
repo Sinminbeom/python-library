@@ -138,16 +138,16 @@ class S3StorageClient(IStorageClient):
             raise e
 
     def is_exists(self, path: str) -> bool:
+        bucket, key = self._parse_s3_path(path)
         try:
-            bucket, key = self._parse_s3_path(path)
-
             self._client.head_object(Bucket=bucket, Key=key)
             return True
         except ClientError as e:
-            if e.response["Error"]["Code"] == "404":
-                return False
-            else:
+            if e.response["Error"]["Code"] != "404":
                 raise
+
+        response = self._client.list_objects_v2(Bucket=bucket, Prefix=key, MaxKeys=1)
+        return response.get("KeyCount", 0) > 0
 
     def copy(self, src_path: str, dst_path: str) -> None:
         try:
