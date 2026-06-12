@@ -16,8 +16,16 @@ class S3StorageClient(IStorageClient):
     SERVICE_NAME = "s3"
     SCHEME = "s3://"
 
-    def __init__(self):
+    def __init__(
+        self,
+        access_key: Optional[str] = None,
+        secret_key: Optional[str] = None,
+        session_token: Optional[str] = None,
+    ) -> None:
         self._client: Optional[BaseClient] = None
+        self._access_key = access_key
+        self._secret_key = secret_key
+        self._session_token = session_token
 
     def connect(self) -> None:
         try:
@@ -29,10 +37,17 @@ class S3StorageClient(IStorageClient):
                 tcp_keepalive=True,
             )
 
-            self._client = boto3.client(
-                service_name=S3StorageClient.SERVICE_NAME,
-                config=config,
-            )
+            kwargs: dict = {
+                "service_name": S3StorageClient.SERVICE_NAME,
+                "config": config,
+            }
+
+            if self._access_key:
+                kwargs["aws_access_key_id"] = self._access_key
+                kwargs["aws_secret_access_key"] = self._secret_key
+                kwargs["aws_session_token"] = self._session_token
+
+            self._client = boto3.client(**kwargs)
         except Exception as e:
             raise e
         pass
