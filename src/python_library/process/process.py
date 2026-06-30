@@ -44,7 +44,7 @@ class abProcess(Process, IProcess):
         try:
             self.action()
         except Exception as e:
-            raise e
+            self.on_exception(e)
 
     def start(self):
         self._event.clear()
@@ -63,14 +63,17 @@ class abProcess(Process, IProcess):
     def action(self) -> None:
         pass
 
+    def on_exception(self, e: Exception) -> None:
+        raise e
+
 
 class abProcessing(abProcess):
     def run(self) -> None:
-        try:
-            while not self.is_stop():
+        while not self.is_stop():
+            try:
                 self.action()
-        except Exception as e:
-            raise e
+            except Exception as e:
+                self.on_exception(e)
 
     @abstractmethod
     def action(self) -> None:

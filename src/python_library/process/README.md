@@ -112,3 +112,19 @@ while True:
 
 `stop()` 호출 시 내부 `multiprocessing.Event`를 set한다.
 `is_stop()`, `is_running()`으로 외부에서 상태를 확인할 수 있다.
+
+### 예외 처리 (on_exception)
+
+`action()` 예외는 `run()`이 잡아 `on_exception(e)`를 호출한다. **기본은 예외를 다시
+던진다(fail-loud)** — 단발형(`abProcess`)은 종료, 루프형(`abProcessing`/`QueueProcessing`)은
+루프가 끝난다. resilient 워커가 필요하면 `on_exception`을 오버라이드해 예외를 삼긴다.
+
+```python
+class MyProcess(abProcess):
+    def on_exception(self, e: Exception) -> None:
+        logger.error("process %s failed, continuing: %s", self.name, e)  # 삼키고 계속
+```
+
+> 주의: `on_exception`은 **자식 프로세스 안에서** 실행된다. 메모리가 분리되므로
+> 부모 프로세스의 상태를 직접 바꿀 수 없다. 부모가 실패를 인지해야 한다면
+> `multiprocessing.Queue`(공유 큐)에 실패 정보를 push하는 식으로 전달한다.

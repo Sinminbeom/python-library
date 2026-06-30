@@ -129,6 +129,26 @@ while True:
 
 `manager.stop()` 호출 시 관리 중인 모든 하위 스레드에도 `stop()`이 전파된다.
 
+### 예외 처리 (on_exception)
+
+`action()`에서 예외가 발생하면 `run()`이 이를 잡아 `on_exception(e)`를 호출한다.
+**기본 구현은 예외를 다시 던진다(fail-loud)** — 표준 `threading.Thread`와 동일하게
+단발형은 종료되고, 루프형(`abThreading`/`QueueThreading`)은 루프가 끝난다(fail-fast).
+라이브러리가 실패를 조용히 삼키지 않도록 한 의도적 기본값이다.
+
+"한 job이 실패해도 계속 도는" resilient 워커가 필요하면 `on_exception`을 오버라이드해
+예외를 삼킨다(다시 던지지 않는다).
+
+```python
+class MyWorker(QueueThreading):
+    def on_exception(self, e: Exception) -> None:
+        logger.error("job failed, continuing: %s", e)  # 삼키고 계속
+```
+
+스레드 예외는 `start()`/`join()` 호출 측으로 전파되지 않으므로(기본값은
+`threading.excepthook`으로 traceback 출력 후 종료), 호출 측이 실패를 인지해야 한다면
+`on_exception`에서 별도로 신호를 전달해야 한다.
+
 ### 이름 자동 생성
 
 `ClassNameGenerator`를 통해 이름을 지정하지 않으면 `MyWorkerThread1`, `MyWorkerThread2`처럼 클래스별로 순번이 붙는다.

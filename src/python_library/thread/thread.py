@@ -55,11 +55,14 @@ class abThread(Thread, IThread):
         try:
             self.action()
         except Exception as e:
-            raise e
+            self.on_exception(e)
 
     @abstractmethod
     def action(self) -> None:
         pass
+
+    def on_exception(self, e: Exception) -> None:
+        raise e
 
 
 class abThreading(abThread):
@@ -67,8 +70,8 @@ class abThreading(abThread):
         super().__init__()
 
     def run(self) -> None:
-        try:
-            while not self.is_stop():
+        while not self.is_stop():
+            try:
                 self.action()
-        except Exception as e:
-            raise e
+            except Exception as e:
+                self.on_exception(e)

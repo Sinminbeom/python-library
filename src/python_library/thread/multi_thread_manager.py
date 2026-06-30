@@ -37,7 +37,7 @@ class MultiThreadManager(QueueThread[T], Generic[T]):
                 thread.join()
 
         except Exception as e:
-            raise e
+            self.on_exception(e)
 
     def action(self) -> None:
         pass
