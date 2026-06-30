@@ -98,11 +98,11 @@ class QueueThread(abThread, IQueueThread[T], Generic[T]):
 
 class QueueThreading(QueueThread[T], Generic[T]):
     def run(self) -> None:
-        try:
-            while not self.is_stop():
+        while not self.is_stop():
+            try:
                 self.action()
-        except Exception as e:
-            raise e
+            except Exception as e:
+                self.on_exception(e)
 
     @abstractmethod
     def action(self) -> None:

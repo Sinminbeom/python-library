@@ -90,11 +90,11 @@ class QueueProcess(abProcess, IQueueProcess[T], Generic[T]):
 
 class QueueProcessing(QueueProcess[T], Generic[T]):
     def run(self) -> None:
-        try:
-            while not self.is_stop():
+        while not self.is_stop():
+            try:
                 self.action()
-        except Exception as e:
-            raise e
+            except Exception as e:
+                self.on_exception(e)
 
     @abstractmethod
     def action(self) -> None:

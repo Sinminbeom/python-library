@@ -89,7 +89,7 @@ class MultiProcessManager(abThread, Generic[T]):
                 process.join()
 
         except Exception as e:
-            raise e
+            self.on_exception(e)
 
     def action(self) -> None:
         pass
