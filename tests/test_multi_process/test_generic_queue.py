@@ -29,10 +29,8 @@ class IntEchoProcess(QueueProcess[int]):
 def _wire(process: QueueProcess) -> None:
     manager = Manager()
     shared_queue = manager.dict()
-    shared_queue_lock = manager.dict()
     shared_queue[process.name] = manager.Queue()
-    shared_queue_lock[process.name] = manager.Lock()
-    process.set_shared_queue(shared_queue, shared_queue_lock)
+    process.set_shared_queue(shared_queue)
 
 
 def test_str_payload_round_trip():
@@ -66,7 +64,7 @@ def test_pop_returns_none_when_empty():
 def test_shared_job_queue_generic_payload():
     process = StrEchoProcess()
     manager = Manager()
-    process.set_shared_job_queue(manager.Queue(), manager.Lock())
+    process.set_shared_job_queue(manager.Queue())
 
     process.push_shared_job_queue("envelope-job-1")
     assert process.size_shared_job_queue() == 1

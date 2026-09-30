@@ -1,5 +1,4 @@
 import time
-from threading import Lock
 from typing import Dict
 
 from python_library.job_queue.job_queue import IJobQueue, JobQueue
@@ -30,8 +29,7 @@ class IntEchoThread(QueueThread[int]):
 
 def _wire(thread: QueueThread) -> None:
     shared_queue: Dict[str, IJobQueue] = dict()
-    shared_queue_lock: Dict[str, Lock] = dict()
-    thread.set_shared_queue(shared_queue, shared_queue_lock)
+    thread.set_shared_queue(shared_queue)
 
 
 def test_str_payload_round_trip():
@@ -99,7 +97,7 @@ def test_shared_queue_pops_in_fifo_order():
 def test_shared_job_queue_generic_payload():
     thread = StrEchoThread()
     job_queue: JobQueue[str] = JobQueue()
-    thread.set_shared_job_queue(job_queue, Lock())
+    thread.set_shared_job_queue(job_queue)
 
     thread.push_shared_job_queue("envelope-job-1")
     assert thread.size_shared_job_queue() == 1

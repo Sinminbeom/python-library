@@ -43,12 +43,8 @@ from python_library.thread.queue_thread import QueueThread
 
 class MyWorkerThread(QueueThread):
     def action(self) -> None:
-        while True:
-            time.sleep(1)
-
-            print(f"{self.name} || is_running = {self.is_running()}")
-
-            job = self.pop_shared_queue(self.name)  # 이름 지정 큐
+        while not self.is_stop():
+            job = self.pop_shared_queue(self.name, timeout=1)  # 이름 지정 큐, 최대 1초 대기
             if job is None:
                 continue
 
@@ -64,10 +60,8 @@ from python_library.thread.multi_thread_manager import MultiThreadManager
 
 class MyManager(MultiThreadManager):
     def action(self) -> None:
-        while True:
-            time.sleep(1)
-
-            job = self.pop_shared_queue(self.name)
+        while not self.is_stop():
+            job = self.pop_shared_queue(self.name, timeout=1)
             if job is None:
                 continue
 
@@ -110,8 +104,9 @@ while True:
 
 ### process 패키지와의 차이
 
-스레드는 **같은 메모리를 공유**하므로 일반 `threading.Lock`과 `JobQueue(list 기반)`를 사용한다.
-프로세스는 메모리가 분리되므로 `multiprocessing.Queue`와 `multiprocessing.Lock`을 사용한다.
+스레드는 **같은 메모리를 공유**하므로 스스로 동기화하는 `JobQueue`(deque + `Condition`)를 사용한다.
+락은 큐 내부에 있으므로 스레드·매니저는 큐에 위임만 한다.
+프로세스는 메모리가 분리되므로 프로세스 간 안전한 `multiprocessing.Manager().Queue()`를 사용한다.
 
 ### 공유 큐 두 가지
 
@@ -128,6 +123,11 @@ while True:
 ### stop 전파
 
 `manager.stop()` 호출 시 관리 중인 모든 하위 스레드에도 `stop()`이 전파된다.
+큐에서 기다리는 스레드는 `pop`의 `timeout`이 지난 뒤 `is_stop()`을 확인하고 종료하므로, 루프는 반드시 `while not self.is_stop()`으로 작성한다.
+
+### 같은 이름의 스레드
+
+같은 이름으로 여러 스레드를 `append`하면 이름 지정 큐 하나를 공유한다(기존 큐 재사용).
 
 ### 예외 처리 (on_exception)
 
