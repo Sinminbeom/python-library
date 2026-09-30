@@ -1,5 +1,6 @@
 from abc import abstractmethod
-from typing import Generic, List, Optional, TypeVar
+from collections import deque
+from typing import Deque, Generic, Optional, TypeVar
 
 T = TypeVar("T")
 
@@ -28,7 +29,7 @@ class IJobQueue(Generic[T]):
 
 class JobQueue(IJobQueue[T], Generic[T]):
     def __init__(self) -> None:
-        self._job_queue: List[T] = list()
+        self._job_queue: Deque[T] = deque()
 
     def append(self, item: T) -> None:
         self._job_queue.append(item)
@@ -37,7 +38,7 @@ class JobQueue(IJobQueue[T], Generic[T]):
         if self.is_empty():
             return None
 
-        return self._job_queue.pop()
+        return self._job_queue.popleft()
 
     def size(self) -> int:
         return len(self._job_queue)
