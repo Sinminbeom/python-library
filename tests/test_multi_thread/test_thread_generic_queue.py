@@ -71,10 +71,29 @@ def test_job_queue_generic_str():
     assert queue.is_empty() is False
 
     popped = queue.pop()
-    assert popped == "b"  # list.pop() is LIFO
+    assert popped == "a"
 
     queue.clear()
     assert queue.is_empty() is True
+
+
+def test_job_queue_pops_in_fifo_order():
+    queue: JobQueue[int] = JobQueue()
+    for item in range(5):
+        queue.append(item)
+
+    assert [queue.pop() for _ in range(5)] == [0, 1, 2, 3, 4]
+    assert queue.pop() is None
+
+
+def test_shared_queue_pops_in_fifo_order():
+    thread = IntEchoThread()
+    _wire(thread)
+
+    for item in range(3):
+        thread.push_shared_queue(thread.name, item)
+
+    assert [thread.pop_shared_queue(thread.name) for _ in range(3)] == [0, 1, 2]
 
 
 def test_shared_job_queue_generic_payload():

@@ -7,7 +7,7 @@
 
 ```
 IJobQueue (ABC)             # 큐 인터페이스
-└── JobQueue                # list 기반 기본 구현 (FIFO)
+└── JobQueue                # deque 기반 기본 구현 (FIFO)
 ```
 
 ## IJobQueue 인터페이스
@@ -28,7 +28,7 @@ class IJobQueue(ABC):
 `thread`와 `process` 패키지에서 직접 `list`나 `Queue`를 쓰지 않고 인터페이스를 통해 의존한다.
 `JobQueue` 구현을 우선순위 큐, 지연 큐 등으로 교체할 수 있다.
 
-현재 `JobQueue`는 `list` 기반이며 FIFO로 동작한다 (`append`로 뒤에서 추가, `pop`으로 앞에서 제거).
+현재 `JobQueue`는 `collections.deque` 기반이며 FIFO로 동작한다 (`append`로 뒤에서 추가, `pop`으로 앞에서 제거).
 
 ---
 
