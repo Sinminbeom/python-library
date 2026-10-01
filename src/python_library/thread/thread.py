@@ -38,10 +38,6 @@ class abThread(Thread, IThread):
         super().__init__(name=name)
         self.event = Event()
 
-    def start(self) -> None:
-        self.event.clear()
-        super().start()
-
     def stop(self) -> None:
         self.event.set()
 
