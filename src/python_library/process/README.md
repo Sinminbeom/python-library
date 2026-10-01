@@ -18,17 +18,15 @@ MultiProcessManager             # 여러 프로세스를 묶어서 관리 (abThr
 
 ### 1. 프로세스 정의
 
-`abProcess`를 상속하고 `action()`만 구현한다.
+`QueueProcess`를 상속하고 `action()`만 구현한다. 공유 큐가 필요 없으면 `abProcess`를 상속한다.
 
 ```python
-from python_library.process.process import abProcess
+from python_library.process.queue_process import QueueProcess
 
-class MyProcess(abProcess):
+class MyProcess(QueueProcess):
     def action(self) -> None:
-        while True:
-            time.sleep(1)
-
-            job = self.pop_shared_queue(self.name)  # 이름 지정 큐에서 꺼내기
+        while not self.is_stop():
+            job = self.pop_shared_queue(self.name, timeout=1)  # 이름 지정 큐, 최대 1초 대기
             if job is None:
                 continue
 
@@ -46,10 +44,8 @@ from python_library.process.multi_process_manager import MultiProcessManager
 
 class MyManager(MultiProcessManager):
     def action(self) -> None:
-        while True:
-            time.sleep(1)
-
-            job = self.pop_shared_queue(self.name)
+        while not self.is_stop():
+            job = self.pop_shared_queue(self.name, timeout=1)
             if job is None:
                 continue
 
@@ -100,8 +96,16 @@ while True:
 | 공용 큐 | `push_shared_job_queue(job)` | 모든 프로세스가 경쟁적으로 소비 |
 | 이름 지정 큐 | `push_shared_queue("이름", job)` | 특정 프로세스에만 전달 |
 
-`MultiProcessManager`가 `multiprocessing.Manager()`로 큐와 Lock을 생성해 각 프로세스에 주입한다.
+`MultiProcessManager`가 `multiprocessing.Manager()`로 큐를 생성해 각 프로세스에 주입한다.
 프로세스 간 메모리가 분리되므로 반드시 `multiprocessing.Queue`를 사용한다.
+
+`Manager().Queue()`는 그 자체로 프로세스 간 안전하므로 별도 Lock을 두지 않는다.
+`pop_shared_*(…, timeout)`은 `get(timeout=…)`으로 꺼내며, 잡이 없으면 `None`을 반환한다.
+
+| `timeout` | 동작 |
+|---|---|
+| `0` (기본값) | 기다리지 않고 바로 반환 |
+| 양수 | 최대 그 시간(초)만큼 기다린 뒤, 잡이 없으면 `None` |
 
 ### 이름 자동 생성
 
@@ -112,6 +116,9 @@ while True:
 
 `stop()` 호출 시 내부 `multiprocessing.Event`를 set한다.
 `is_stop()`, `is_running()`으로 외부에서 상태를 확인할 수 있다.
+
+`manager.stop()`은 관리 중인 모든 하위 프로세스에 `stop()`을 전파한다.
+큐에서 기다리는 프로세스는 `pop`의 `timeout`이 지난 뒤 `is_stop()`을 확인하고 종료하므로, 루프는 반드시 `while not self.is_stop()`으로 작성한다.
 
 ### 예외 처리 (on_exception)
 
