@@ -1,3 +1,7 @@
+import time
+
+import pytest
+
 from python_library.thread.thread import abThread, abThreading
 
 
@@ -100,4 +104,37 @@ def test_loop_continues_when_on_exception_swallows():
     thread.join()
 
     assert len(thread.caught) == 3
+    assert not thread.is_alive()
+
+
+class LoopingThreading(abThreading):
+    def __init__(self):
+        super().__init__()
+        self.count = 0
+
+    def action(self) -> None:
+        self.count += 1
+        time.sleep(0.01)
+
+
+def test_stop_before_start_is_preserved():
+    thread = LoopingThreading()
+    thread.stop()
+    thread.start()
+    thread.join(timeout=1)
+
+    assert not thread.is_alive()
+    assert thread.count == 0
+
+
+def test_restart_does_not_revive_stopping_loop():
+    thread = LoopingThreading()
+    thread.start()
+    thread.stop()
+
+    with pytest.raises(RuntimeError):
+        thread.start()
+
+    thread.join(timeout=1)
+    assert thread.is_stop()
     assert not thread.is_alive()

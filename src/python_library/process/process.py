@@ -46,10 +46,6 @@ class abProcess(Process, IProcess):
         except Exception as e:
             self.on_exception(e)
 
-    def start(self):
-        self._event.clear()
-        super().start()
-
     def is_stop(self) -> bool:
         return self._event.is_set()
 
